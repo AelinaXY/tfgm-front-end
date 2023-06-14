@@ -1,0 +1,12 @@
+.testDiv{
+  background-color: #b7fefe;
+  color: #1a1a1a;
+  stroke: #1a1a1a;
+  stroke-width: 0.5%;
+  width: 20%;
+  margin-left: 1%;
+  margin-top: 1%;
+  border-radius: 25px;
+  padding: 1%;
+  font-family: Verdana, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
