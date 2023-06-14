@@ -1,12 +1,29 @@
-.testDiv{
+.tramBox{
   background-color: #b7fefe;
   color: #1a1a1a;
   stroke: #1a1a1a;
   stroke-width: 0.5%;
-  width: 20%;
+  width: 30%;
+  height: 50%;
   margin-left: 1%;
   margin-top: 1%;
   border-radius: 25px;
   padding: 1%;
   font-family: Verdana, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header{
+  height:10%;
+  padding-bottom: 2%;
+}
+
+.scroll{
+  height: 85%;
+  overflow:hidden;
+  scroll-behavior: smooth;
+}
+
+.scroll:hover{
+  overflow-y: scroll;
+
 }

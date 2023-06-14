@@ -7,6 +7,7 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import dataLines from './data/Metrolink_Lines_Functional.json'
 import dataPoints from './data/Metrolink_Stops_Functional.json'
 import "./App.css";
+import TramDetailBox from './components/TramDetailGetter';
 
 
 const INITIAL_VIEW_STATE = {
@@ -103,10 +104,7 @@ export default function App({
 
       <Map reuseMaps mapLib={maplibregl} mapStyle={mapStyle} preventStyleDiffing={true} />
 
-      <div className='testDiv'>
-        <h1>{tramStop}</h1>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque in tortor bibendum justo posuere facilisis sit amet vehicula libero. Vestibulum porta velit at fringilla ultrices. Curabitur bibendum ante quis arcu tristique, vel semper massa tincidunt. Phasellus aliquet justo non nisi aliquet pretium. Mauris sodales ex non porta molestie. Praesent pellentesque diam quam, nec lacinia nisi porttitor sit amet. Donec viverra, lorem tristique cursus vulputate, nunc urna malesuada ex, gravida maximus quam tortor ac est. Phasellus pharetra, urna et suscipit elementum, mi orci aliquam ex, at ornare est libero vitae purus. Proin at venenatis ex.  </p>
-      </div>
+      <TramDetailBox name={tramStop}/>
     </DeckGL>
     </>
   );
