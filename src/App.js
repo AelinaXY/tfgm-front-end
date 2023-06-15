@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {createRoot} from 'react-dom/client';
 import {Map} from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
@@ -8,6 +8,8 @@ import dataLines from './data/Metrolink_Lines_Functional.json'
 import dataPoints from './data/Metrolink_Stops_Functional.json'
 import "./App.css";
 import TramDetailBox from './components/TramDetailGetter';
+import axios from 'axios';
+import { render } from 'react-dom';
 
 
 const INITIAL_VIEW_STATE = {
@@ -28,8 +30,18 @@ export default function App({
   radiusPixels = 30,
   mapStyle = MAP_STYLE
 }) {
+
+  const [tramStop,setTramStop] = useState("Deansgate-Castlefield");
+  const [error, setError] = useState("");
+  const [tramStopData,setTramStopData] = useState("");
+  const [incomingTramStopName, setIncomingTramStopName] = useState("");
+  const [outgoingTramStopName, setOutgoingTramStopName] = useState("");
+
+
+  const TENSECOND_MS = 10000;
   
-  const layers = [new GeoJsonLayer({
+  const layers = [
+    new GeoJsonLayer({
     id: 'geojson-layer',
     data: dataPoints,
     pickable: true,
@@ -78,7 +90,7 @@ export default function App({
     lineWidthScale: 20,
     lineWidthMinPixels: 2,
     getLineColor: [255, 255, 255, 250],
-    getFillColor: [226, 40, 102, 255],
+    getFillColor: d => calculateColor(d.properties.name),
     getPointRadius: 45,
     getLineWidth: 0.5,
     getElevation: 30,
@@ -89,13 +101,72 @@ export default function App({
     textOutlineColor: [26,26,26],
     getTextSize: 20,
     getTextAlignmentBaseline: 'top',
+    updateTriggers:{
+      getFillColor: tramStopData 
+    }
   })
   
 ];
 
-  console.log(dataLines);
+    const request = ((url, setFunction) =>
+  {
+    const config = {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
+    
+    axios
+      .get(url, config)
+      .then((response) => {
+        setError("");
+        setFunction(response.data);
+      })
+      .catch((error) => {
+        setError(error);
+      });
 
-  const [tramStop,setTramStop] = useState("Deansgate-Castlefield");
+  })
+
+  const calculateColor = (tramStopName) =>
+  {
+    let runningCount = 0;
+    const cleanTramStopName = tramStopName.replace(/\W/g, '');
+    const incomingName = cleanTramStopName + "Incoming";
+    const outgoingName = cleanTramStopName + "Outgoing";
+
+    if(!(tramStopData[incomingName] == undefined))
+    {
+      runningCount += tramStopData[incomingName].length;
+    }
+
+    if(!(tramStopData[outgoingName] == undefined))
+    {
+      runningCount += tramStopData[outgoingName].length;
+    }
+
+    console.log("update!");
+    if(runningCount > 0)
+    {
+      return [204,245,172,255];
+    }
+
+    else{
+      return [232,126,161,255];
+    }
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      request("http://localhost:8080/trams/alltramsatstop", setTramStopData);
+      setTramStop(tramStop);
+    }, TENSECOND_MS);
+  
+    request("http://localhost:8080/trams/alltramsatstop", setTramStopData);
+    return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
+  }, [])
+
+
 
   return (
     <>
@@ -104,7 +175,7 @@ export default function App({
 
       <Map reuseMaps mapLib={maplibregl} mapStyle={mapStyle} preventStyleDiffing={true} />
 
-      <TramDetailBox name={tramStop}/>
+      <TramDetailBox id='tramDetailBox' name={tramStop}/>
     </DeckGL>
     </>
   );
