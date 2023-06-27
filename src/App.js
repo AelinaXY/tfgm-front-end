@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {createRoot} from 'react-dom/client';
 import {Map} from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
@@ -34,8 +34,11 @@ export default function App({
   const [tramStop,setTramStop] = useState("Deansgate-Castlefield");
   const [error, setError] = useState("");
   const [tramStopData,setTramStopData] = useState("");
-  const [incomingTramStopName, setIncomingTramStopName] = useState("");
-  const [outgoingTramStopName, setOutgoingTramStopName] = useState("");
+  const loaded = useRef(false);
+  let timestamps = [];
+  const liveData = useRef(true);
+  const [checked,setChecked] = useState(true);
+
 
 
   const TENSECOND_MS = 10000;
@@ -48,22 +51,31 @@ export default function App({
     stroked: true,
     filled: true,
     extruded: true,
-    pointType: 'circle+text',
+    pointType: 'circle',
     lineWidthScale: 20,
     lineWidthMinPixels: 2,
-    getLineColor: [255, 255, 255, 250],
-    getFillColor: [226, 40, 102, 255],
+    getLineColor: [255, 255, 255, 0],
+    getFillColor: [226, 40, 102, 0],
     getPointRadius: 45,
     getLineWidth: 0.5,
     getElevation: 30,
     getText: f=> f.properties.name,
-    getTextColor: [255,255,255,255],
+    getTextColor: [255,255,255,0],
     textFontSettings:{sdf: true},
     textOutlineWidth: 3,
     textOutlineColor: [26,26,26],
     getTextSize: 20,
     getTextAlignmentBaseline: 'top',
-    onClick: (event) => setTramStop(event.object.properties.name)
+    onClick: (event) => {
+      if(event.object.geometry.type === "Point")
+      {
+        setTramStop(event.object.properties.name);
+      }
+      else
+      {
+        setTramStop("");
+      }
+    }
   }),new GeoJsonLayer({
     id: 'geojson-layer',
     data: dataLines,
@@ -74,7 +86,7 @@ export default function App({
     pointType: 'circle',
     lineWidthScale: 20,
     lineWidthMinPixels: 2,
-    getLineColor: [183, 253, 254, 255],
+    getLineColor: [59, 144, 186, 255],
     getPointRadius: 100,
     getLineWidth: 1,
     getElevation: 30,
@@ -86,30 +98,52 @@ export default function App({
     stroked: true,
     filled: true,
     extruded: true,
-    pointType: 'circle+text',
-    lineWidthScale: 20,
+    pointType: 'circle',
+    lineWidthScale: 2,
     lineWidthMinPixels: 2,
-    getLineColor: [255, 255, 255, 250],
+    getLineColor: [236, 236, 238, 250],
     getFillColor: d => calculateColor(d.properties.name),
     getPointRadius: 45,
     getLineWidth: 0.5,
     getElevation: 30,
-    getText: f=> f.properties.name,
-    getTextColor: [255,255,255,255],
-    textFontSettings:{sdf: true},
-    textOutlineWidth: 3,
-    textOutlineColor: [26,26,26],
-    getTextSize: 20,
-    getTextAlignmentBaseline: 'top',
     updateTriggers:{
-      getFillColor: tramStopData 
-    }
+      getFillColor: tramStopData
+      }
   })
   
 ];
 
-    const request = ((url, setFunction) =>
+    const requestAsync = ((url, setFunction) =>
   {
+
+    let returnData;
+
+    const config = {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
+    
+    return new Promise (resolve => {axios
+      .get(url, config)
+      .then((response) => {
+        setError("");
+        setFunction(response.data);
+        resolve("")
+      })
+      .catch((error) => {
+        setError(error);
+      })
+        }
+    )
+
+  })
+
+  const request = ((url, setFunction) =>
+  {
+
+    let returnData;
+
     const config = {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -125,7 +159,6 @@ export default function App({
       .catch((error) => {
         setError(error);
       });
-
   })
 
   const calculateColor = (tramStopName) =>
@@ -148,35 +181,65 @@ export default function App({
     console.log("update!");
     if(runningCount > 0)
     {
-      return [204,245,172,255];
+      return [78,146,17,255];
     }
 
     else{
-      return [232,126,161,255];
+      return [173,31,78,255];
     }
   }
 
+  const setTimestamps = (timestampsRaw) =>
+  {
+    timestamps = timestampsRaw;
+  }
+
   useEffect(() => {
+
+    const fetchData = async () =>{
+      await requestAsync("http://localhost:8080/trams/timestamps", setTimestamps);
+      if(timestamps.length > 0)
+      {
+        const finalIndex = timestamps.length -1;
+        await requestAsync("http://localhost:8080/trams/alltramsatstop/" + timestamps[finalIndex], setTramStopData)
+      }
+      
+
+    }
     const interval = setInterval(() => {
-      request("http://localhost:8080/trams/alltramsatstop", setTramStopData);
-      setTramStop(tramStop);
+      fetchData();
     }, TENSECOND_MS);
-  
-    request("http://localhost:8080/trams/alltramsatstop", setTramStopData);
+
+    fetchData();
     return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
   }, [])
 
-
+  const liveBox = (() =>
+  {
+    console.log("bleh")
+    setChecked(!checked);
+  })
 
   return (
     <>
-    <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
+    {checked? <> <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
     getTooltip={({object}) => object && `${object.properties.name}`}>
 
       <Map reuseMaps mapLib={maplibregl} mapStyle={mapStyle} preventStyleDiffing={true} />
 
-      <TramDetailBox id='tramDetailBox' name={tramStop}/>
-    </DeckGL>
+      <TramDetailBox name={tramStop} data={tramStopData}/>
+
+      
+    </DeckGL></> : <p>hi</p>}
+    
+
+    <span className='liveBox'>
+        <h1 className='liveName'>Live</h1>
+      <label class="switch">
+        <input type="checkbox" onChange={liveBox} checked={checked}/>
+        <span class="slider round"></span>
+      </label>
+      </span>
     </>
   );
 }
