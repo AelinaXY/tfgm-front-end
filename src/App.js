@@ -21,7 +21,6 @@ const INITIAL_VIEW_STATE = {
   bearing: 0
 };
 
-// const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
 export default function App({
@@ -35,9 +34,12 @@ export default function App({
   const [error, setError] = useState("");
   const [tramStopData,setTramStopData] = useState("");
   const loaded = useRef(false);
-  let timestamps = [];
+  const timestamps = useRef();
   const liveData = useRef(true);
   const [checked,setChecked] = useState(true);
+  const [nonLiveTimestamp, setNonLiveTimestamp] = useState("");
+
+
 
 
 
@@ -191,20 +193,18 @@ export default function App({
 
   const setTimestamps = (timestampsRaw) =>
   {
-    timestamps = timestampsRaw;
+    timestamps.current = timestampsRaw;
   }
 
   useEffect(() => {
 
     const fetchData = async () =>{
       await requestAsync("http://localhost:8080/trams/timestamps", setTimestamps);
-      if(timestamps.length > 0)
+      if(timestamps.current.length > 0)
       {
-        const finalIndex = timestamps.length -1;
-        await requestAsync("http://localhost:8080/trams/alltramsatstop/" + timestamps[finalIndex], setTramStopData)
+        const finalIndex = timestamps.current.length -1;
+        await requestAsync("http://localhost:8080/trams/alltramsatstop/" + timestamps.current[finalIndex], setTramStopData);
       }
-      
-
     }
     const interval = setInterval(() => {
       fetchData();
@@ -216,21 +216,34 @@ export default function App({
 
   const liveBox = (() =>
   {
-    console.log("bleh")
+    console.log("liveBoxCheck")
     setChecked(!checked);
   })
 
   return (
     <>
-    {checked? <> <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
+    <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
     getTooltip={({object}) => object && `${object.properties.name}`}>
 
       <Map reuseMaps mapLib={maplibregl} mapStyle={mapStyle} preventStyleDiffing={true} />
 
       <TramDetailBox name={tramStop} data={tramStopData}/>
 
+      {!checked ? 
+      <>
+      <h1>{timestamps.current}</h1>
+      <select name='timestamps' className='timestampBox' onChange={(choice => setNonLiveTimestamp(choice.target.value))}>
+        {timestamps.current.map((ts) => (
+          <option value={ts}>Timestamp: {ts}</option>
+        ))}
+      </select>
+      </>
+      :
+      <></>
+      }
+
       
-    </DeckGL></> : <p>hi</p>}
+    </DeckGL>
     
 
     <span className='liveBox'>
@@ -240,6 +253,8 @@ export default function App({
         <span class="slider round"></span>
       </label>
       </span>
+
+      
     </>
   );
 }
