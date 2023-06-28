@@ -136,9 +136,34 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-.testSlider{
+.timeLineBox{
   position: absolute;
-  top: 50vh;
-  width: 100%;
-  left: 10vw;
+  bottom: 1%;
+  right:10%;
+  left: 10%;
+  background-color: #0c0c0c;
+  color: #ececee;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1%;
+  border-radius: 5px;
+  padding: 1%;
+  padding-bottom: 0.5%;
+  font-family: monospace, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  border-style: solid;
+  border-width: thin;
+  border-color: #ececee;
+}
+
+/* .timeLineButtonGroup{
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+} */
+
+.timeLineBox h1{
+  font-size: 200%;
+  margin: 0px;
+  margin-bottom: 1%;
+  text-align: center;
 }
