@@ -37,7 +37,7 @@ export default function App({
   const timestamps = useRef();
   const liveData = useRef(true);
   const [checked,setChecked] = useState(true);
-  const [nonLiveTimestamp, setNonLiveTimestamp] = useState("");
+  const [nonLiveTimestamp, setNonLiveTimestamp] = useState(0);
 
 
 
@@ -211,6 +211,8 @@ export default function App({
     }, TENSECOND_MS);
 
     fetchData();
+
+
     return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
   }, [])
 
@@ -220,6 +222,7 @@ export default function App({
     setChecked(!checked);
   })
 
+  console.log(nonLiveTimestamp);
   return (
     <>
     <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
@@ -228,10 +231,10 @@ export default function App({
       <Map reuseMaps mapLib={maplibregl} mapStyle={mapStyle} preventStyleDiffing={true} />
 
       <TramDetailBox name={tramStop} data={tramStopData}/>
-
+      
       {!checked ? 
       <>
-      <h1>{timestamps.current}</h1>
+      <h1>{nonLiveTimestamp}</h1>
       <select name='timestamps' className='timestampBox' onChange={(choice => setNonLiveTimestamp(choice.target.value))}>
         {timestamps.current.map((ts) => (
           <option value={ts}>Timestamp: {ts}</option>
@@ -242,8 +245,9 @@ export default function App({
       <></>
       }
 
-      
     </DeckGL>
+
+    
     
 
     <span className='liveBox'>
