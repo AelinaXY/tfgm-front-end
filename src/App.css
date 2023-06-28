@@ -135,3 +135,10 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+.testSlider{
+  position: absolute;
+  top: 50vh;
+  width: 100%;
+  left: 10vw;
+}

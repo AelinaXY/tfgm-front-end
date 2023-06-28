@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {createRoot} from 'react-dom/client';
 import {Map} from 'react-map-gl';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { GeoJSONFeature } from 'maplibre-gl';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import dataLines from './data/Metrolink_Lines_Functional.json'
@@ -10,6 +10,7 @@ import "./App.css";
 import TramDetailBox from './components/TramDetailGetter';
 import axios from 'axios';
 import { render } from 'react-dom';
+import { Slider, Box } from '@mui/material';
 
 
 const INITIAL_VIEW_STATE = {
@@ -34,10 +35,11 @@ export default function App({
   const [error, setError] = useState("");
   const [tramStopData,setTramStopData] = useState("");
   const loaded = useRef(false);
-  const timestamps = useRef();
+  const timestamps = useRef([]);
   const liveData = useRef(true);
   const [checked,setChecked] = useState(true);
   const [nonLiveTimestamp, setNonLiveTimestamp] = useState(0);
+  const [sliderValue, setSliderValue] = useState(2);
 
 
 
@@ -180,7 +182,7 @@ export default function App({
       runningCount += tramStopData[outgoingName].length;
     }
 
-    console.log("update!");
+    console.log("updating Colours!");
     if(runningCount > 0)
     {
       return [78,146,17,255];
@@ -199,13 +201,26 @@ export default function App({
   useEffect(() => {
 
     const fetchData = async () =>{
-      await requestAsync("http://localhost:8080/trams/timestamps", setTimestamps);
-      if(timestamps.current.length > 0)
+      if(checked)
       {
-        const finalIndex = timestamps.current.length -1;
-        await requestAsync("http://localhost:8080/trams/alltramsatstop/" + timestamps.current[finalIndex], setTramStopData);
+        console.log("IM LIVE")
+        await requestAsync("http://localhost:8080/trams/timestamps", setTimestamps);
+        if(timestamps.current.length > 0)
+        {
+          const finalIndex = timestamps.current.length -1;
+          await requestAsync("http://localhost:8080/trams/alltramsatstop/" + timestamps.current[finalIndex], setTramStopData);
+        }
       }
+      else
+      {
+        if(nonLiveTimestamp !== 0){
+          console.log("IM NONT LIVE")
+
+        await requestAsync("http://localhost:8080/trams/alltramsatstop/" + nonLiveTimestamp, setTramStopData);    
+      } 
     }
+    
+  }
     const interval = setInterval(() => {
       fetchData();
     }, TENSECOND_MS);
@@ -214,7 +229,7 @@ export default function App({
 
 
     return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
-  }, [])
+  }, [nonLiveTimestamp, checked])
 
   const liveBox = (() =>
   {
@@ -222,7 +237,20 @@ export default function App({
     setChecked(!checked);
   })
 
-  console.log(nonLiveTimestamp);
+
+  
+  function calculateValue(value) {
+    return 2 ** value;
+  }
+
+  const handleChange = (event, newValue) => {
+    
+    if (typeof newValue === 'number') {
+      setSliderValue(newValue);
+    }
+  };
+
+
   return (
     <>
     <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={layers}
@@ -247,9 +275,6 @@ export default function App({
 
     </DeckGL>
 
-    
-    
-
     <span className='liveBox'>
         <h1 className='liveName'>Live</h1>
       <label class="switch">
@@ -257,8 +282,20 @@ export default function App({
         <span class="slider round"></span>
       </label>
       </span>
-
-      
+{/* 
+  <Box sx={{width: 300 }}>
+      <Slider className='testSlider'
+  defaultValue={30}
+  value={sliderValue}
+  onChange={handleChange}
+  valueLabelDisplay="auto"
+  step={1}
+  scale={calculateValue}
+  marks
+  min={1}
+  max={10}
+/>
+</Box> */}
     </>
   );
 }
