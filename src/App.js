@@ -245,7 +245,6 @@ export default function App({
   const mapUnixToNormal = (unixTimestamp) => {
     var formatted = moment
       .unix(unixTimestamp)
-      .utc()
       .format("dddd, MMMM Do YYYY, h:mm:ss a");
     return formatted;
   };
@@ -298,7 +297,7 @@ export default function App({
 
     if(sign === "pos")
     {
-      var diff = 1000000;
+      var diff = 10000000;
     }
     else
     {
@@ -380,7 +379,7 @@ export default function App({
       {!checked ? (
           <>
             <Box
-              sx={{ width: 700 }}
+              sx={{ width: 750 }}
               className="timeLineBox"
               justifyContent="center"
               alignItems="center"
