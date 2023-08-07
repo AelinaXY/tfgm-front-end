@@ -8,6 +8,7 @@ import dataLines from "./data/Metrolink_Lines_Functional.json";
 import dataPoints from "./data/Metrolink_Stops_Functional.json";
 import "./App.css";
 import TramDetailBox from "./components/TramDetailGetter";
+import TramDetailBoxLive from "./components/TramDetailGetterLive";
 import axios from "axios";
 import { render } from "react-dom";
 import { Slider, Box, Button, ButtonGroup, Grid, createTheme } from "@mui/material";
@@ -135,25 +136,33 @@ export default function App({
     });
   };
 
-  const request = (url, setFunction) => {
+  const requestAsyncPost = (url, setFunction,bodyParam) => {
     let returnData;
+
 
     const config = {
       headers: {
         "Access-Control-Allow-Origin": "*",
-      },
+      }
     };
 
-    axios
-      .get(url, config)
-      .then((response) => {
-        setError("");
-        setFunction(response.data);
-      })
-      .catch((error) => {
-        setError(error);
-      });
+    console.log(config)
+
+    return new Promise((resolve) => {
+      axios
+        .post(url, bodyParam,config)
+        .then((response) => {
+          setError("");
+          setFunction(response.data);
+          resolve("");
+        })
+        .catch((error) => {
+          setError(error);
+        });
+    });
   };
+
+
 
   const calculateColor = (tramStopName) => {
     let runningCount = 0;
@@ -191,10 +200,11 @@ export default function App({
         );
         if (timestamps.current.length > 0) {
           const finalIndex = timestamps.current.length - 1;
-          await requestAsync(
-            "http://localhost:8080/trams/alltramsatstop/" +
-              timestamps.current[finalIndex],
-            setTramStopData
+          await requestAsyncPost(
+            "http://localhost:8080/journey/calculateNextTrams",
+            setTramStopData,
+            {"stopname": tramStop,
+            "timestamp": timestamps.current[finalIndex]}
           );
         }
       } else {
@@ -223,19 +233,6 @@ export default function App({
     setChecked(!checked);
   };
 
-  function calculateValue(value) {
-    return 2 ** value;
-  }
-
-  const handleChange = (event, newValue) => {
-    console.log("PREVAL: " + sliderValue);
-    console.log("NEWVAL: " + newValue);
-
-    if (typeof newValue === "number") {
-      setSliderValue(newValue);
-    }
-  };
-
   const nonZeroTimestamp = () => {
     if (nonLiveTimestamp === 0 && timestamps.current.length > 0) {
       setNonLiveTimestamp(timestamps.current[0]);
@@ -255,27 +252,6 @@ export default function App({
   }
 
   const findClosestTimestamp = (timestamp, change, timestampArray, sign) => {
-    // const optimalTimestamp = timestamp + change;
-
-    // var current = timestampArray[0];
-
-    // var diff = optimalTimestamp - current;
-
-    // for(var val = 0 ; val < timestampArray.length; val++)
-    // {
-    //   if(sign === "negative")
-    //   {
-
-    //   }
-    //   var newDiff = Math.abs(optimalTimestamp - timestampArray[val]);
-    //   if(newDiff < diff)
-    //   {
-    //     diff = newDiff;
-    //     current = timestampArray[val];
-    //   }
-    // }
-    // // setNonLiveTimestamp(current);
-    // return current;
 
     var timestampArraySorted = timestampArray.sort(compareNumbers);
 
@@ -363,7 +339,14 @@ export default function App({
           preventStyleDiffing={true}
         />
 
-        <TramDetailBox name={tramStop} data={tramStopData} />
+        {checked ? (
+          <>
+            <TramDetailBoxLive name={tramStop}/>
+          </>
+        ) : (
+          <><TramDetailBox name={tramStop} data={tramStopData} checked={checked} /></>
+        )}
+        
 
         {!checked ? (
           <>
@@ -392,21 +375,6 @@ export default function App({
                   </h1>
                   
                 </Grid>
-
-
-                <Grid item xs={12}></Grid>
-                <Slider
-                  className="testSlider"
-                  defaultValue={30}
-                  value={sliderValue}
-                  onChange={handleChange}
-                  valueLabelDisplay="on"
-                  step={1}
-                  scale={calculateValue}
-                  marks
-                  min={0}
-                  max={10}
-                />
                 <Grid container justifyContent="center" xs={12}>
                     <Button sx={buttonStylingBack} onClick={() => setNonLiveTimestamp(findClosestTimestamp(nonLiveTimestamp,-86400,timestamps.current,"min"))}>-1 Day</Button>
                     <Button sx={buttonStylingBack} onClick={() => setNonLiveTimestamp(findClosestTimestamp(nonLiveTimestamp,-3600,timestamps.current,"min"))}>-1 Hour</Button>

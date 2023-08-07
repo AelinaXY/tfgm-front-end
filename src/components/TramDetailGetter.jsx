@@ -8,6 +8,7 @@ const TramDetailBox = (props) => {
 
     const tramStopName = props.name;
     const tramStopData = props.data;
+    const checked = props.checked;
     const notScaled = useRef(true);
     const loaded = useRef(true);
     const [data, setData] = useState("");
@@ -32,7 +33,35 @@ const TramDetailBox = (props) => {
 
     }
 
-  if (tramStopName !== "") {
+    console.log(tramStopData);
+  if (tramStopName !== ""  && !checked){
+
+        return (
+            <>
+
+            <div className="tramBox">
+                <div className="header">
+                <h1>{tramStopName}:</h1>
+                </div>
+                <div className="scroll">
+                {tramData["Incoming"] !== undefined ? <><h2>Incoming Trams:</h2>
+                {tramData["Incoming"].map((m) => {return <>
+                <h3>Tram heading to {JSON.parse(m)["endOfLine"]} with {JSON.parse(m)["population"]} passenger(s).</h3>
+                </>})
+                } </>: <></>}
+                {tramData["Outgoing"] !== undefined ? <><h2>Outgoing Trams:</h2>
+                {tramData["Outgoing"].map((m) => {return <>
+                <h3>Tram heading to {JSON.parse(m)["endOfLine"]} with {JSON.parse(m)["population"]} passenger(s).</h3>
+                </>})
+                } </>: <></>}
+                {tramData["Outgoing"] === undefined && tramData["Incoming"] === undefined  ? <h3>No Trams at Stop</h3> : <></>}
+                </div>
+             </div>
+             </>
+          );
+    }
+
+    else if (tramStopName !== ""){
 
         return (
             <>
