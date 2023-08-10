@@ -49,7 +49,7 @@ const TramDetailBoxLive = (props) => {
           }
         };
     
-        console.log(config)
+        // console.log(config)
     
         return new Promise((resolve) => {
           axios
@@ -100,7 +100,8 @@ const TramDetailBoxLive = (props) => {
         tramStopData["Incoming"] = tramStopData["Incoming"].sort(function (a,b) {return a.timeToArrival > b.timeToArrival;});
         tramStopData["Outgoing"] = tramStopData["Outgoing"].sort(function (a,b) {return a.timeToArrival > b.timeToArrival;});
 
-        console.log(tramStopData["Incoming"]);
+
+        console.log(tramStopData);
 
         return (
             <>

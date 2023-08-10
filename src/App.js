@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect} from "react";
 import { createRoot } from "react-dom/client";
 import { Map } from "react-map-gl";
 import maplibregl, { GeoJSONFeature } from "maplibre-gl";
@@ -13,6 +13,7 @@ import axios from "axios";
 import { render } from "react-dom";
 import { Slider, Box, Button, ButtonGroup, Grid, createTheme } from "@mui/material";
 import moment from "moment";
+import TramRoutePlanner from "./components/TramRoutePlanner";
 
 const INITIAL_VIEW_STATE = {
   longitude: -2.2449,
@@ -37,12 +38,10 @@ export default function App({
   const [tramStop, setTramStop] = useState("Deansgate-Castlefield");
   const [error, setError] = useState("");
   const [tramStopData, setTramStopData] = useState("");
-  const loaded = useRef(false);
   const timestamps = useRef([]);
   const liveData = useRef(true);
   const [checked, setChecked] = useState(true);
   const [nonLiveTimestamp, setNonLiveTimestamp] = useState(0);
-  const [sliderValue, setSliderValue] = useState(2);
 
   const TENSECOND_MS = 10000;
 
@@ -190,7 +189,7 @@ export default function App({
     timestamps.current = timestampsRaw;
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const fetchData = async () => {
       if (checked) {
         console.log("IM LIVE");
@@ -200,11 +199,9 @@ export default function App({
         );
         if (timestamps.current.length > 0) {
           const finalIndex = timestamps.current.length - 1;
-          await requestAsyncPost(
-            "http://localhost:8080/journey/calculateNextTrams",
-            setTramStopData,
-            {"stopname": tramStop,
-            "timestamp": timestamps.current[finalIndex]}
+          await requestAsync(
+            "http://localhost:8080/trams/alltramsatstop/" + timestamps.current[finalIndex],
+            setTramStopData
           );
         }
       } else {
@@ -219,8 +216,8 @@ export default function App({
       }
     };
 
-    const interval = setInterval(() => {
-      fetchData();
+    const interval = setInterval(async () => {
+      await fetchData();
     }, TENSECOND_MS);
 
     fetchData();
@@ -389,7 +386,7 @@ export default function App({
         ) : (
           <></>
         )}
-
+ 
       <span className="liveBox">
         <h1 className="liveName">Live</h1>
         <label class="switch">
@@ -397,6 +394,8 @@ export default function App({
           <span class="slider round"></span>
         </label>
       </span>
+
+      <TramRoutePlanner checked={checked}/>
 
       
     </>
