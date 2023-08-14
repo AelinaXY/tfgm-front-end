@@ -395,7 +395,7 @@ export default function App({
         </label>
       </span>
 
-      <TramRoutePlanner checked={checked}/>
+      <TramRoutePlanner checked={checked} timestamp={timestamps.current.length > 0 ? timestamps.current[timestamps.current.length-1] : 0}/>
 
       
     </>

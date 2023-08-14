@@ -12,8 +12,7 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { TextField, Autocomplete } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-
-
+import axios from "axios";
 
 const TramRoutePlanner = (props) => {
   const [state, setState] = React.useState({
@@ -23,9 +22,12 @@ const TramRoutePlanner = (props) => {
 
   const checked = props.checked;
 
-  const [firstStop, setFirstStop] = React.useState(tramstops[0]);
-  const [secondStop, setSecondStop] = React.useState(tramstops[0]);
+  const timestamp = props.timestamp;
 
+  const [firstStop, setFirstStop] = React.useState("");
+  const [secondStop, setSecondStop] = React.useState("");
+  const [result, setResult] = React.useState("");
+  const [error, setError] = React.useState("");
 
   const toggleDrawer = (anchor, open) => (event) => {
     if (
@@ -39,6 +41,32 @@ const TramRoutePlanner = (props) => {
     setOpen(open);
   };
 
+  const requestAsyncPost = (url, setFunction, bodyParam) => {
+    let returnData;
+
+    const config = {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
+
+    // console.log(config)
+
+    return new Promise((resolve) => {
+      axios
+        .post(url, bodyParam, config)
+        .then((response) => {
+          setError("");
+          setFunction(response.data);
+          console.log(result);
+          resolve("");
+        })
+        .catch((error) => {
+          setError(error);
+        });
+    });
+  };
+
   const list = (anchor) => (
     <ThemeProvider theme={theme}>
       <Box
@@ -48,7 +76,6 @@ const TramRoutePlanner = (props) => {
         role="presentation"
         //   onClick={toggleDrawer(anchor, false)}
         //   onKeyDown={toggleDrawer(anchor, false)}
-
       >
         <List>
           <ListItem>
@@ -60,9 +87,9 @@ const TramRoutePlanner = (props) => {
                 setFirstStop(newValue);
               }}
               options={tramstops}
-              sx={{ width: "90%", margin: "auto", textAlign: "center"}}
+              sx={{ width: "90%", margin: "auto", textAlign: "center" }}
               renderInput={(params) => (
-                <TextField {...params} label="Leaving Tramstop" />
+                <TextField {...params} label="Departure Tramstop" />
               )}
             />
           </ListItem>
@@ -75,7 +102,7 @@ const TramRoutePlanner = (props) => {
                 setSecondStop(newValue);
               }}
               options={tramstops}
-              sx={{ width: "90%", margin: "auto", textAlign: "center"}}
+              sx={{ width: "90%", margin: "auto", textAlign: "center" }}
               renderInput={(params) => (
                 <TextField {...params} label="Arrival Tramstop" />
               )}
@@ -83,16 +110,54 @@ const TramRoutePlanner = (props) => {
           </ListItem>
         </List>
         <Divider />
+
+        <div className="outputBox">
+          <Button
+            variant="contained"
+            color="success"
+            onClick={async () => {
+              if (firstStop !== "" && secondStop !== "") {
+                await requestAsyncPost(
+                  "http://localhost:8080/journey/calculateJourney",
+                  setResult,
+                  {
+                    startStop: firstStop,
+                    endStop: secondStop,
+                    timestamp: timestamp,
+                  }
+                );
+              }
+            }}
+          >
+            Calculate Route
+          </Button>
+          {console.log(result)}
+          {result !== "" && error === "" ? 
+          <>{result.secondTramArrivalTime == null ?<>
+          <h3>Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
+          <h3>No changes needed</h3>
+          <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime)  * 1000).toISOString().substring(12, 19)} </h3></>:
+          <>
+          <h3>First Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
+          <h3>Change at <b>{result.changeStop}</b></h3>
+          <h3>Second Tram Arriving in {new Date(result.secondTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
+          <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime + result.secondTramArrivalTime) * 1000).toISOString().substring(12, 19)}</h3></>}
+          </> 
+          : <h3>{JSON.stringify(error)}</h3>}
+        </div>
+        <Divider />
         <div className="insideSwitch">
-        <label class="switch">
-              <input
-                type="checkbox"
-                onChange={toggleDrawer("right", !openState)}
-                checked={openState}
-              />
-              <span class="slider round"></span>
-            </label>
-            </div>
+          <h3 className="drawerSwitchLabel">Close Route Planner</h3>
+
+          <label class="drawerSwitch">
+            <input
+              type="checkbox"
+              onChange={toggleDrawer("right", !openState)}
+              checked={openState}
+            />
+            <span class="drawerSlider round"></span>
+          </label>
+        </div>
       </Box>
     </ThemeProvider>
   );
@@ -101,23 +166,28 @@ const TramRoutePlanner = (props) => {
     <div>
       {["right"].map((anchor) => (
         <React.Fragment key={anchor}>
-            {checked ?  <span className="planBox">
-            <h1 className="planName">Plan Route</h1>
-            <label class="switch">
-              <input
-                type="checkbox"
-                onChange={toggleDrawer("right", !openState)}
-                checked={openState}
-              />
-              <span class="slider round"></span>
-            </label>
-          </span>:<></>}
-          
+          {checked ? (
+            <span className="planBox">
+              <h1 className="planName">Plan</h1>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  onChange={toggleDrawer("right", !openState)}
+                  checked={openState}
+                />
+                <span class="slider round"></span>
+              </label>
+            </span>
+          ) : (
+            <></>
+          )}
+
           <ThemeProvider theme={theme}>
             <Drawer
               anchor={anchor}
               open={state[anchor]}
               onClose={toggleDrawer(anchor, false)}
+              transitionDuration={400}
             >
               {list(anchor)}
             </Drawer>
@@ -150,10 +220,9 @@ const theme = createTheme({
       main: "#4B9211",
     },
   },
-  typography:
-  {
-    fontFamily: 'IBM Plex Mono'
-  }
+  typography: {
+    fontFamily: "IBM Plex Mono",
+  },
 });
 
 const tramstops = [
@@ -214,7 +283,7 @@ const tramstops = [
   "New Islington",
   "Newbold",
   "Newhey",
-  "Newton Heath and Moss",
+  "Newton Heath and Moston",
   "Northern Moor",
   "Old Trafford",
   "Oldham Central",
