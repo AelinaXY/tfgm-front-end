@@ -143,7 +143,7 @@ const TramRoutePlanner = (props) => {
           <h3>Second Tram Arriving in {new Date(result.secondTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
           <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime + result.secondTramArrivalTime) * 1000).toISOString().substring(12, 19)}</h3></>}
           </> 
-          : <h3>{JSON.stringify(error)}</h3>}
+          : <h3>No Journey Selected or Available</h3>}
         </div>
         <Divider />
         <div className="insideSwitch">
