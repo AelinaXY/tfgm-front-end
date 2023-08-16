@@ -128,15 +128,24 @@ const TramRoutePlanner = (props) => {
           </Button>
           {console.log(result)}
           {result !== "" && error === "" ? 
-          <>{result.secondTramArrivalTime == null ?<>
-          <h3>Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
+          <>{result.thirdTramArrivalTime == null?
+          result.secondTramArrivalTime == null ?<>
+          <h3>Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(12, 19)}</h3>
           <h3>No changes needed</h3>
           <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime)  * 1000).toISOString().substring(12, 19)} </h3></>:
           <>
-          <h3>First Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
-          <h3>Change at <b>{result.changeStop}</b></h3>
-          <h3>Second Tram Arriving in {new Date(result.secondTramArrivalTime * 1000).toISOString().substring(14, 19)}</h3>
-          <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime + result.secondTramArrivalTime) * 1000).toISOString().substring(12, 19)}</h3></>}
+          <h3>First Tram will arrive in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(12, 19)}</h3>
+          <h3>Change at <b>{result.firstChangeStop}</b></h3>
+          <h3>Second Tram will arrive in {new Date(result.secondTramArrivalTime * 1000).toISOString().substring(12, 19)} from arrival at change stop.</h3>
+          <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime + result.secondTramArrivalTime) * 1000).toISOString().substring(12, 19)}</h3></>:
+          <>
+          <h3>First Tram arriving in {new Date(result.firstTramArrivalTime * 1000).toISOString().substring(12, 19)}</h3>
+          <h3>Change at <b>{result.firstChangeStop}</b></h3>
+          <h3>Second Tram will arrive in {new Date(result.secondTramArrivalTime * 1000).toISOString().substring(12, 19)} from arrival at first change stop.</h3>
+          <h3>Change at <b>{result.secondChangeStop}</b></h3>
+          <h3>Third Tram will arrive in {new Date(result.thirdTramArrivalTime * 1000).toISOString().substring(12, 19)} from arrival at second change stop.</h3>
+          <h3>Journey will take {new Date((result.journeyLength + result.firstTramArrivalTime + result.secondTramArrivalTime) * 1000).toISOString().substring(12, 19)}</h3></>
+          }
           </> 
           : <h3>No Journey Selected or Available</h3>}
         </div>
